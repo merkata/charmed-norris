@@ -32,7 +32,24 @@ class CharmedNorrisCharm(CharmBase):
         self.framework.observe(
                 self.on.norris_pebble_ready, self._on_norris_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self._stored.set_default(things=[])
+
+    def _norris_layer(self):
+        """Returns a Pebble configration layer for Norris"""
+        return {
+		    "summary": "norris layer",
+		    "description": "pebble config layer for norris",
+		    "services": {
+		    	"norris": {
+		    		"override": "replace",
+		    		"summary": "norris",
+		    		"command": "/charmed-norris",
+		    		"startup": "enabled",
+		    		"environment": {
+						"CHUCK_CATEGORY": self.config["category"]
+						},
+		    		}
+		    	},
+		    }
 
     def _on_norris_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
@@ -47,19 +64,7 @@ class CharmedNorrisCharm(CharmBase):
         # Get a reference the container attribute on the PebbleReadyEvent
         container = event.workload
         # Define an initial Pebble layer configuration
-        pebble_layer = {
-            "summary": "norris layer",
-            "description": "pebble config layer for norris",
-            "services": {
-                "norris": {
-                    "override": "replace",
-                    "summary": "norris",
-                    "command": "/charmed-norris",
-                    "startup": "enabled",
-                    "environment": {},
-                }
-            },
-        }
+        pebble_layer = self._norris_layer()
         # Add initial Pebble config layer using the Pebble API
         container.add_layer("norris", pebble_layer, combine=True)
         # Autostart any services that were defined with startup: enabled
@@ -67,6 +72,7 @@ class CharmedNorrisCharm(CharmBase):
         # Learn more about statuses in the SDK docs:
         # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
+
 
     def _on_config_changed(self, _):
         """Just an example to show how to deal with changed configuration.
@@ -78,10 +84,25 @@ class CharmedNorrisCharm(CharmBase):
 
         Learn more about config at https://juju.is/docs/sdk/config
         """
-        current = self.config["thing"]
-        if current not in self._stored.things:
-            logger.debug("found a new thing: %r", current)
-            self._stored.things.append(current)
+        # Get the norris container so we can configure/manipulate it
+        container = self.unit.get_container("norris")
+        # Create a new config layer
+        layer = self._norris_layer()
+        # Get the current config
+        services = container.get_plan().to_dict().get("services", {})
+        # Check if there are any changes to services
+        if services != layer["services"]:
+            # Changes were made, add the new layer
+            container.add_layer("norris", layer, combine=True)
+            logging.info("Added updated layer 'norris' to Pebble plan")
+            # Stop the service if it is already running
+            if container.get_service("norris").is_running():
+                container.stop("norris")
+            # Restart it and report a new status to Juju
+            container.start("norris")
+            logging.info("Restarted norris service")
+        # All is well, set an ActiveStatus
+        self.unit.status = ActiveStatus()
 
 if __name__ == "__main__":
     main(CharmedNorrisCharm)
