@@ -21,3 +21,7 @@ resources:
   charmed-norris-image:
     type: oci-image
     description: OCI image for norris (merkata/charmed-norris)
+
+requires:
+  ingress:
+    interface: ingress

@@ -18,6 +18,7 @@ from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
+from charms.nginx_ingress_integrator.v0.ingress import IngressRequires
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,12 @@ class CharmedNorrisCharm(CharmBase):
         self.framework.observe(
                 self.on.norris_pebble_ready, self._on_norris_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+
+        self.ingress = IngressRequires(self, {
+            "service-hostname": "charmed.norris",
+            "service-name": self.app.name,
+            "service-port": 3333
+        })
 
     def _norris_layer(self):
         """Returns a Pebble configration layer for Norris"""
@@ -101,6 +108,7 @@ class CharmedNorrisCharm(CharmBase):
             # Restart it and report a new status to Juju
             container.start("norris")
             logging.info("Restarted norris service")
+        self.ingress.update_config({"service-hostname": "charmed.norris", "service-port": 3333})
         # All is well, set an ActiveStatus
         self.unit.status = ActiveStatus()
 
