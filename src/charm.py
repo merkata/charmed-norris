@@ -31,7 +31,7 @@ class CharmedNorrisCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(
-                self.on.norris_pebble_ready, self._on_norris_pebble_ready)
+            self.on.norris_pebble_ready, self._on_norris_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
 
         self.ingress = IngressRequires(self, {
@@ -43,20 +43,20 @@ class CharmedNorrisCharm(CharmBase):
     def _norris_layer(self):
         """Returns a Pebble configration layer for Norris"""
         return {
-		    "summary": "norris layer",
-		    "description": "pebble config layer for norris",
-		    "services": {
-		    	"norris": {
-		    		"override": "replace",
-		    		"summary": "norris",
-		    		"command": "/charmed-norris",
-		    		"startup": "enabled",
-		    		"environment": {
-						"CHUCK_CATEGORY": self.config["category"]
-						},
-		    		}
-		    	},
-		    }
+            "summary": "norris layer",
+            "description": "pebble config layer for norris",
+            "services": {
+                "norris": {
+                    "override": "replace",
+                    "summary": "norris",
+                    "command": "/charmed-norris",
+                    "startup": "enabled",
+                    "environment": {
+                        "CHUCK_CATEGORY": self.config["category"]
+                    },
+                }
+            },
+        }
 
     def _on_norris_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
@@ -79,7 +79,6 @@ class CharmedNorrisCharm(CharmBase):
         # Learn more about statuses in the SDK docs:
         # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
-
 
     def _on_config_changed(self, _):
         """Just an example to show how to deal with changed configuration.
@@ -111,6 +110,7 @@ class CharmedNorrisCharm(CharmBase):
         self.ingress.update_config({"service-hostname": "charmed.norris", "service-port": 3333})
         # All is well, set an ActiveStatus
         self.unit.status = ActiveStatus()
+
 
 if __name__ == "__main__":
     main(CharmedNorrisCharm)
